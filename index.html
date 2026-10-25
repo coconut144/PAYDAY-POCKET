@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#147d59">
+  <title>Payday Pocket — จัดการเงินตามรอบเงินเดือน</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="Payday Pocket หน้าหลัก">
+        <span class="brand-icon">▰</span>
+        <span><strong>Payday Pocket</strong><small>จัดการเงินให้อยู่ถึงวันเงินเดือนออก</small></span>
+      </a>
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard">⌂ <span>หน้าหลัก</span></button>
+        <button class="nav-item" data-view="transactions">▤ <span>รายการรับ-จ่าย</span></button>
+        <button class="nav-item" data-view="analytics">◔ <span>กราฟสรุป</span></button>
+        <button class="nav-item" data-view="settings">⚙ <span>ตั้งค่ารอบเงินเดือน</span></button>
+        <button class="nav-item" data-view="budget">♧ <span>ตั้งค่างบประมาณ</span></button>
+        <button class="nav-item" data-view="backup">⇧ <span>นำเข้า / ส่งออกข้อมูล</span></button>
+      </nav>
+      <div class="sidebar-note"><span class="note-emoji">🌱</span><strong>คุมเงินได้ทีละวัน</strong><small>เริ่มจากจดทุกบาท แล้วค่อย ๆ สร้างนิสัยการเงินที่ดี</small></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><p class="eyebrow" id="page-eyebrow">PAYDAY POCKET / OVERVIEW</p><h1 id="page-title">สวัสดี 👋</h1><p class="muted" id="today-line">มาดูกันว่าเงินของคุณไปอยู่ที่ไหน</p></div>
+        <div class="top-actions">
+          <label class="period-picker"><span>▦</span><select id="period-select" aria-label="เลือกรอบเงินเดือน"></select></label>
+          <button class="icon-button" data-view="settings" title="ตั้งค่า">⚙</button>
+          <button class="primary-button" id="add-top">＋ เพิ่มรายการ</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <div class="summary-grid">
+          <article class="card balance-card">
+            <div class="card-label"><span class="round-icon green">▰</span><span>เงินคงเหลือในรอบนี้</span></div>
+            <div class="big-number" id="balance-total">฿0.00</div>
+            <div class="balance-meta"><span>รายรับ <b id="income-total">฿0</b></span><span>รายจ่าย <b id="expense-total">฿0</b></span></div>
+            <div class="progress"><span id="spend-progress"></span></div>
+            <small id="spend-percent" class="muted">ใช้เงินไปแล้ว 0% ของรายรับ</small>
+          </article>
+          <article class="card mini-card"><span class="round-icon orange">♨</span><span class="muted">รายจ่ายวันนี้</span><strong id="today-expenses">฿0</strong><small id="today-count">0 รายการ</small></article>
+          <article class="card mini-card"><span class="round-icon blue">▦</span><span class="muted">เหลืออีก</span><strong id="days-left">0 วัน</strong><small>ก่อนจบรอบเงินเดือน</small></article>
+        </div>
+
+        <div class="content-grid">
+          <article class="card chart-card">
+            <div class="section-heading"><div><h2>ภาพรวมรายจ่าย</h2><p class="muted">สัดส่วนรายจ่ายตามหมวดหมู่</p></div><button class="text-button" data-view="analytics">ดูกราฟทั้งหมด →</button></div>
+            <div class="donut-wrap"><canvas id="category-chart" aria-label="กราฟวงกลมรายจ่าย"></canvas><div class="donut-center"><strong id="donut-total">฿0</strong><small>รายจ่ายรวม</small></div></div>
+            <div id="category-legend" class="legend"></div>
+          </article>
+          <article class="card recent-card">
+            <div class="section-heading"><div><h2>รายการล่าสุด</h2><p class="muted">รายการในรอบเงินเดือนนี้</p></div><button class="text-button" data-view="transactions">ดูทั้งหมด →</button></div>
+            <div id="recent-list" class="transaction-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-transactions">
+        <article class="card">
+          <div class="section-heading"><div><h2>รายการรับ-จ่าย</h2><p class="muted">บันทึกและจัดการรายการของคุณ</p></div><button class="primary-button" id="add-transactions">＋ เพิ่มรายการ</button></div>
+          <div class="toolbar"><input id="search-transactions" type="search" placeholder="ค้นหารายการหรือหมวดหมู่..."><select id="type-filter"><option value="all">ทั้งหมด</option><option value="expense">รายจ่าย</option><option value="income">รายรับ</option></select></div>
+          <div id="all-transactions" class="transaction-list"></div>
+        </article>
+      </section>
+
+      <section class="view" id="view-analytics">
+        <div class="content-grid analytics-grid">
+          <article class="card chart-card"><div class="section-heading"><div><h2>รายจ่ายตามหมวดหมู่</h2><p class="muted">ดูว่าเงินหมดไปกับอะไร</p></div></div><div class="large-chart"><canvas id="analytics-category"></canvas></div></article>
+          <article class="card chart-card"><div class="section-heading"><div><h2>รายจ่ายรายวัน</h2><p class="muted">เปรียบเทียบยอดใช้ในแต่ละวัน</p></div></div><div class="large-chart"><canvas id="daily-chart"></canvas></div></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <article class="card settings-card"><div class="section-heading"><div><h2>ตั้งค่ารอบเงินเดือน</h2><p class="muted">กำหนดวันเริ่มและวันสิ้นสุดของรอบที่คุณใช้จริง</p></div></div>
+          <form id="settings-form" class="form-grid">
+            <label>รายรับประจำต่อรอบ (บาท)<input type="number" min="0" step="0.01" id="salary-input" placeholder="เช่น 25000" required></label>
+            <label>วันที่เริ่มรอบ<select id="start-day"></select></label>
+            <label>วันที่สิ้นสุดรอบ<select id="end-day"></select></label>
+            <label>เดือนที่ต้องการดู<input type="month" id="period-month" required></label>
+            <div class="period-preview"><span>▦</span><div><strong>ตัวอย่างรอบเงินเดือน</strong><p id="period-preview-text">—</p><small>วันที่ไม่มีในบางเดือนจะใช้วันสุดท้ายของเดือนนั้นโดยอัตโนมัติ</small></div></div>
+            <div><button class="primary-button" type="submit">บันทึกการตั้งค่า</button></div>
+          </form>
+        </article>
+      </section>
+
+      <section class="view" id="view-budget">
+        <article class="card settings-card"><div class="section-heading"><div><h2>ตั้งค่างบประมาณ</h2><p class="muted">กำหนดงบรายจ่ายแต่ละหมวดต่อรอบเงินเดือน</p></div></div>
+          <form id="budget-form"><div id="budget-fields" class="budget-fields"></div><button class="primary-button" type="submit">บันทึกงบประมาณ</button></form>
+        </article>
+      </section>
+
+      <section class="view" id="view-backup">
+        <article class="card settings-card"><div class="section-heading"><div><h2>จัดการข้อมูล</h2><p class="muted">ข้อมูลเก็บอยู่ในเบราว์เซอร์นี้ สำรองไว้เพื่อป้องกันข้อมูลสูญหาย</p></div></div>
+          <div class="backup-actions"><div class="backup-row"><span class="round-icon green">⇩</span><div><strong>ส่งออกข้อมูล</strong><p class="muted">ดาวน์โหลดรายการและการตั้งค่าเป็นไฟล์ JSON</p></div><button class="secondary-button" id="export-data">ส่งออก JSON</button></div>
+          <div class="backup-row"><span class="round-icon blue">⇧</span><div><strong>นำเข้าข้อมูล</strong><p class="muted">กู้คืนข้อมูลจากไฟล์สำรอง JSON</p></div><label class="secondary-button file-button">เลือกไฟล์<input type="file" id="import-file" accept=".json,application/json" hidden></label></div>
+          <div class="backup-row danger-row"><span class="round-icon orange">!</span><div><strong>ล้างข้อมูลทั้งหมด</strong><p class="muted">ลบรายการและการตั้งค่าที่บันทึกในเบราว์เซอร์นี้</p></div><button class="danger-button" id="clear-data">ล้างข้อมูล</button></div></div>
+        </article>
+      </section>
+      <footer>Payday Pocket <span>·</span> HTML · CSS · JavaScript · ข้อมูลเก็บในอุปกรณ์ของคุณ</footer>
+    </main>
+  </div>
+
+  <dialog id="transaction-dialog">
+    <form id="transaction-form" method="dialog" class="dialog-form">
+      <div class="dialog-heading"><div><p class="eyebrow">PAYDAY POCKET</p><h2 id="dialog-title">เพิ่มรายการ</h2></div><button class="close-button" type="button" id="close-dialog" aria-label="ปิด">×</button></div>
+      <input type="hidden" id="transaction-id">
+      <div class="segmented"><button type="button" class="segment active" data-type="expense">รายจ่าย</button><button type="button" class="segment" data-type="income">รายรับ</button></div>
+      <label>จำนวนเงิน (บาท)<input type="number" id="amount-input" min="0.01" step="0.01" placeholder="เช่น 350" required></label>
+      <div class="form-grid two-col"><label>วันที่<input type="date" id="date-input" required></label><label>หมวดหมู่<select id="category-input" required></select></label></div>
+      <label>รายละเอียด (ไม่บังคับ)<input id="note-input" maxlength="120" placeholder="เช่น ข้าวกลางวัน"></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" id="cancel-dialog">ยกเลิก</button><button type="submit" class="primary-button">บันทึกรายการ</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
