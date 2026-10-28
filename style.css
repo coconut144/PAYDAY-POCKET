@@ -43,6 +43,15 @@ textarea {
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+.nav-icon {
+  font-style: normal;
 }
 
 button:focus-visible,
@@ -64,6 +73,7 @@ a {
 
 .app-shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: 245px minmax(0, 1fr);
 }
@@ -235,7 +245,7 @@ a {
   border: 0;
   outline: 0;
   background: transparent;
-  max-width: 180px;
+  max-width: 250px;
   font-size: 12px;
   color: var(--ink);
 }
@@ -699,11 +709,17 @@ a {
 
 .budget-field label {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   font-size: 12px;
 }
 
 .budget-field input {
   width: 115px;
+  flex-shrink: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px;
@@ -771,6 +787,7 @@ dialog {
   border-radius: 18px;
   width: min(520px, calc(100% - 28px));
   max-height: min(90vh, 760px);
+  max-height: min(90dvh, 760px);
   overflow-y: auto;
   box-shadow: 0 20px 90px rgba(16, 44, 31, 0.27);
   color: var(--ink);
@@ -836,6 +853,48 @@ dialog::backdrop {
   color: #fff;
 }
 
+.amount-field {
+  display: grid;
+  gap: 8px;
+}
+
+.calc-keys {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.calc-key {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #f6f9f7;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.calc-key:active {
+  background: var(--green-light);
+}
+
+.calc-equals {
+  background: var(--green-light);
+  color: var(--green-dark);
+  border-color: #cfe9da;
+}
+
+.amount-result {
+  min-height: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-dark);
+}
+
+.amount-result.error {
+  color: #c44c43;
+}
+
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -877,6 +936,80 @@ dialog::backdrop {
   background: #9f342e;
 }
 
+/* More menu (mobile bottom sheet) */
+.sheet-body {
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.sheet-list {
+  display: grid;
+  gap: 8px;
+}
+
+.sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  color: var(--ink);
+}
+
+.sheet-item:active {
+  background: var(--green-light);
+}
+
+.sheet-item strong,
+.sheet-item small {
+  display: block;
+}
+
+.sheet-item small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Floating add button (mobile) */
+.fab {
+  position: fixed;
+  z-index: 60;
+  right: 16px;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--green);
+  color: #fff;
+  font-size: 26px;
+  box-shadow: 0 8px 22px rgba(20, 125, 89, 0.32);
+  transition: transform 0.15s ease;
+}
+
+.fab:active {
+  transform: scale(0.94);
+}
+
+/* Touch devices: no sticky hover highlight after a tap */
+@media (hover: none) {
+  .nav-item:hover:not(.active) {
+    background: transparent;
+    color: #61766b;
+  }
+
+  .small-action:hover,
+  .close-button:hover {
+    background: inherit;
+  }
+}
+
 /* Medium screens */
 @media (max-width: 1050px) {
   .app-shell {
@@ -910,11 +1043,20 @@ dialog::backdrop {
 
 /* Mobile */
 @media (max-width: 680px) {
-  .app-shell {
-    display: block;
-    padding-bottom: 68px;
+  .mobile-only {
+    display: revert !important;
   }
 
+  .desktop-only {
+    display: none !important;
+  }
+
+  .app-shell {
+    display: block;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  /* Bottom tab bar */
   .sidebar {
     position: fixed;
     z-index: 50;
@@ -922,11 +1064,13 @@ dialog::backdrop {
     left: 0;
     right: 0;
     min-height: 0;
-    height: 64px;
-    padding: 6px 8px;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding: 6px 8px env(safe-area-inset-bottom);
     border-right: 0;
     border-top: 1px solid var(--line);
-    box-shadow: 0 -5px 18px rgba(24, 53, 43, 0.04);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -5px 18px rgba(24, 53, 43, 0.05);
   }
 
   .brand,
@@ -937,66 +1081,86 @@ dialog::backdrop {
   .nav {
     display: flex;
     justify-content: space-around;
-    gap: 2px;
-    height: 100%;
+    gap: 4px;
+    height: 58px;
   }
 
   .nav-item {
     flex: 1;
     justify-content: center;
     flex-direction: column;
-    gap: 2px;
-    padding: 5px 2px;
-    font-size: 17px;
-    border-radius: 9px;
+    gap: 1px;
+    padding: 4px 2px;
+    border-radius: 12px;
     min-width: 0;
   }
 
+  .nav-item.nav-more {
+    display: flex !important;
+  }
+
+  .nav-icon {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
   .nav-item span {
-    font-size: 9px;
+    font-size: 11px;
+    max-width: 100%;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .nav-item:nth-child(5),
-  .nav-item:nth-child(6) {
-    display: none;
+  .nav-item.active {
+    background: transparent;
   }
 
+  .nav-item.active .nav-icon {
+    background: var(--green-light);
+    border-radius: 99px;
+    padding: 0 16px;
+  }
+
+  /* Page header */
   .main {
-    padding: 20px 13px;
+    padding: calc(16px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left));
   }
 
   .topbar {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
-    margin-bottom: 18px;
-    gap: 13px;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .eyebrow {
+    display: none;
   }
 
   .topbar h1 {
-    font-size: 23px;
+    font-size: 22px;
   }
 
   .top-actions {
     width: 100%;
-    flex-wrap: wrap;
   }
 
   .period-picker {
     flex: 1;
     min-width: 0;
+    min-height: 46px;
   }
 
   .period-picker select {
     max-width: none;
     flex: 1;
     min-width: 0;
+    font-size: 16px;
+    padding: 4px 0;
   }
 
-  .top-actions .primary-button {
-    flex: 1;
-  }
-
+  /* Cards */
   .summary-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -1007,12 +1171,17 @@ dialog::backdrop {
   }
 
   .card {
-    padding: 15px;
-    border-radius: 14px;
+    padding: 16px;
+    border-radius: 16px;
   }
 
   .big-number {
-    font-size: 29px;
+    font-size: 30px;
+    margin-bottom: 14px;
+  }
+
+  .balance-meta {
+    font-size: 12px;
   }
 
   .mini-card {
@@ -1023,31 +1192,85 @@ dialog::backdrop {
     font-size: 21px;
   }
 
+  .muted,
+  .mini-card small {
+    font-size: 12px;
+  }
+
   .content-grid,
   .analytics-grid {
     grid-template-columns: 1fr;
-    gap: 13px;
+    gap: 12px;
   }
 
-  .legend {
-    gap: 10px 7px;
+  .section-heading {
+    margin-bottom: 14px;
   }
 
   .section-heading h2 {
-    font-size: 15px;
+    font-size: 16px;
   }
 
-  .form-grid,
-  .budget-fields {
-    grid-template-columns: 1fr;
+  .text-button {
+    min-height: 40px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
-  .period-preview {
-    grid-column: auto;
+  .legend {
+    gap: 10px 12px;
+  }
+
+  .legend-item,
+  .legend-item strong {
+    font-size: 12px;
+  }
+
+  /* Transactions */
+  .transaction-row {
+    gap: 10px;
+    padding: 12px 0;
+  }
+
+  .tx-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tx-info strong {
+    font-size: 14px;
+  }
+
+  .tx-info small {
+    font-size: 12px;
+  }
+
+  .tx-amount {
+    font-size: 14px;
+  }
+
+  .tx-actions {
+    gap: 0;
+  }
+
+  .small-action {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .small-action:active {
+    background: #eaf2ed;
   }
 
   .toolbar {
     flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+    padding: 4px 0 8px;
   }
 
   .toolbar input {
@@ -1057,6 +1280,43 @@ dialog::backdrop {
   .toolbar select {
     max-width: none;
     flex: 1;
+  }
+
+  /* Forms: 16px inputs stop iOS from zooming on focus */
+  .toolbar input,
+  .toolbar select,
+  .form-grid input,
+  .form-grid select,
+  .dialog-form input,
+  .dialog-form select,
+  .dialog-form textarea,
+  .budget-field input {
+    font-size: 16px;
+    min-height: 46px;
+  }
+
+  .form-grid,
+  .budget-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid label,
+  .dialog-form label,
+  .budget-field label {
+    font-size: 13px;
+  }
+
+  .period-preview {
+    grid-column: auto;
+  }
+
+  .settings-card .primary-button[type="submit"] {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .budget-field input {
+    width: 120px;
   }
 
   .backup-row {
@@ -1070,39 +1330,87 @@ dialog::backdrop {
   .backup-row > button,
   .backup-row > .file-button {
     margin-left: 49px;
+    min-height: 44px;
   }
 
   .large-chart {
-    height: 260px;
+    height: 280px;
+  }
+
+  footer {
+    padding-top: 20px;
+  }
+
+  /* Dialogs become bottom sheets */
+  dialog {
+    width: 100%;
+    max-width: 100%;
+    margin: auto 0 0;
+    border-radius: 22px 22px 0 0;
+    max-height: 92vh;
+    max-height: 92dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: sheet-up 0.22s ease-out;
+  }
+
+  dialog::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 10px auto 0;
+    border-radius: 99px;
+    background: #d6e1da;
   }
 
   .dialog-form {
-    padding: 19px;
+    padding: 12px 18px 18px;
+    gap: 14px;
+  }
+
+  .sheet-body {
+    padding: 12px 18px 18px;
+  }
+
+  .close-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .segment {
+    min-height: 44px;
   }
 
   .two-col {
     grid-template-columns: 1fr 1fr;
   }
 
-  .tx-actions {
-    flex-direction: column;
+  .dialog-actions {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding-top: 6px;
   }
 
-  .tx-icon {
-    width: 34px;
-    height: 34px;
+  .dialog-actions button {
+    flex: 1;
+    min-height: 48px;
   }
 
-  .transaction-row {
-    gap: 8px;
-  }
-
-  .tx-amount {
-    font-size: 11px;
+  .toast {
+    bottom: calc(150px + env(safe-area-inset-bottom));
+    font-size: 13px;
   }
 }
 
-@media (max-width: 380px) {
+@keyframes sheet-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 340px) {
   .summary-grid {
     grid-template-columns: 1fr;
   }
@@ -1114,12 +1422,16 @@ dialog::backdrop {
   .two-col {
     grid-template-columns: 1fr;
   }
+}
 
-  .transaction-row {
-    flex-wrap: wrap;
+@media (max-width: 380px) {
+  .small-action {
+    width: 34px;
+    height: 34px;
   }
 
-  .tx-info {
-    flex-basis: calc(100% - 95px);
+  .tx-icon {
+    width: 36px;
+    height: 36px;
   }
 }
