@@ -648,6 +648,12 @@ a {
   position: relative;
 }
 
+.analytics-grid .donut-wrap {
+  width: 260px;
+  height: 240px;
+  margin-bottom: 18px;
+}
+
 /* Settings */
 .settings-card {
   max-width: 900px;
@@ -1510,5 +1516,117 @@ dialog::backdrop {
 
   .pocket-list {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Custom pockets */
+.budget-subhead {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.pocket-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+}
+
+.budget-subhead-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.budget-subhead-row .budget-subhead {
+  margin: 0;
+}
+
+.new-pocket-button {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+.pocket-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--green-light);
+}
+
+.pocket-preview-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--white);
+  font-size: 26px;
+}
+
+.pocket-preview div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pocket-preview strong {
+  overflow-wrap: anywhere;
+}
+
+.pocket-preview small {
+  color: var(--green-dark);
+  font-size: 12px;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 6px;
+}
+
+.icon-choice {
+  aspect-ratio: 1;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.icon-choice.active {
+  border-color: var(--green);
+  background: var(--green-light);
+  box-shadow: 0 0 0 2px var(--green) inset;
+}
+
+@media (hover: hover) {
+  .icon-choice:hover {
+    border-color: var(--green);
+  }
+}
+
+@media (max-width: 680px) {
+  .icon-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .icon-choice {
+    font-size: 22px;
   }
 }

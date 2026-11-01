@@ -51,20 +51,13 @@
         </div>
 
         <article class="card pockets-card" id="pockets-card" hidden>
-          <div class="section-heading"><div><h2>กระเป๋างบประมาณ</h2><p class="muted">เงินที่เหลือในแต่ละกระเป๋ารอบนี้</p></div><button class="text-button" data-view="budget">ปรับงบ →</button></div>
+          <div class="section-heading"><div><h2>กระเป๋างบประมาณ</h2><p class="muted">เงินที่เหลือในแต่ละกระเป๋ารอบนี้</p></div><button class="text-button" data-open-pocket>＋ กระเป๋าใหม่</button></div>
           <div id="pocket-list" class="pocket-list"></div>
         </article>
-        <div class="content-grid">
-          <article class="card chart-card">
-            <div class="section-heading"><div><h2>ภาพรวมรายจ่าย</h2><p class="muted">สัดส่วนรายจ่ายตามหมวดหมู่</p></div><button class="text-button" data-view="analytics">ดูกราฟทั้งหมด →</button></div>
-            <div class="donut-wrap"><canvas id="category-chart" aria-label="กราฟวงกลมรายจ่าย"></canvas><div class="donut-center"><strong id="donut-total">฿0</strong><small>รายจ่ายรวม</small></div></div>
-            <div id="category-legend" class="legend"></div>
-          </article>
-          <article class="card recent-card">
-            <div class="section-heading"><div><h2>รายการล่าสุด</h2><p class="muted">รายการในรอบเงินเดือนนี้</p></div><button class="text-button" data-view="transactions">ดูทั้งหมด →</button></div>
-            <div id="recent-list" class="transaction-list"></div>
-          </article>
-        </div>
+        <article class="card recent-card">
+          <div class="section-heading"><div><h2>รายการล่าสุด</h2><p class="muted">รายการในรอบเงินเดือนนี้</p></div><button class="text-button" data-view="transactions">ดูทั้งหมด →</button></div>
+          <div id="recent-list" class="transaction-list"></div>
+        </article>
       </section>
 
       <section class="view" id="view-transactions">
@@ -77,7 +70,7 @@
 
       <section class="view" id="view-analytics">
         <div class="content-grid analytics-grid">
-          <article class="card chart-card"><div class="section-heading"><div><h2>รายจ่ายตามหมวดหมู่</h2><p class="muted">ดูว่าเงินหมดไปกับอะไร</p></div></div><div class="large-chart"><canvas id="analytics-category"></canvas></div></article>
+          <article class="card chart-card"><div class="section-heading"><div><h2>รายจ่ายตามหมวดหมู่</h2><p class="muted">ดูว่าเงินหมดไปกับอะไร</p></div></div><div class="donut-wrap"><canvas id="category-chart" aria-label="กราฟวงกลมรายจ่าย"></canvas><div class="donut-center"><strong id="donut-total">฿0</strong><small>รายจ่ายรวม</small></div></div><div id="category-legend" class="legend"></div></article>
           <article class="card chart-card"><div class="section-heading"><div><h2>รายจ่ายรายวัน</h2><p class="muted">เปรียบเทียบยอดใช้ในแต่ละวัน</p></div></div><div class="large-chart"><canvas id="daily-chart"></canvas></div></article>
         </div>
       </section>
@@ -96,8 +89,8 @@
       </section>
 
       <section class="view" id="view-budget">
-        <article class="card settings-card"><div class="section-heading"><div><h2>ตั้งค่างบประมาณ</h2><p class="muted">กำหนดงบแต่ละหมวดต่อรอบ แต่ละหมวดที่ตั้งงบจะกลายเป็นกระเป๋าที่เลือกตัดเงินได้ตอนเพิ่มรายการ</p></div></div>
-          <form id="budget-form"><div id="budget-fields" class="budget-fields"></div><button class="primary-button" type="submit">บันทึกงบประมาณ</button></form>
+        <article class="card settings-card"><div class="section-heading"><div><h2>ตั้งค่างบประมาณ</h2><p class="muted">หมวดที่ตั้งงบและกระเป๋าที่สร้างเองจะเลือกตัดเงินได้ตอนเพิ่มรายการ</p></div></div>
+          <form id="budget-form"><h3 class="budget-subhead">งบตามหมวดรายจ่าย</h3><div id="budget-fields" class="budget-fields"></div><div class="budget-subhead-row"><h3 class="budget-subhead">กระเป๋าที่สร้างเอง</h3><button type="button" class="secondary-button new-pocket-button" data-open-pocket>＋ สร้างกระเป๋า</button></div><div id="custom-pocket-fields" class="budget-fields"></div><button class="primary-button" type="submit">บันทึกงบประมาณ</button></form>
         </article>
       </section>
 
@@ -128,6 +121,16 @@
       <div class="dialog-actions"><button type="button" class="secondary-button" id="cancel-dialog">ยกเลิก</button><button type="submit" class="primary-button">บันทึกรายการ</button></div>
     </form>
   </dialog>
+  <dialog id="pocket-dialog">
+    <form id="pocket-form" method="dialog" class="dialog-form">
+      <div class="dialog-heading"><div><p class="eyebrow">PAYDAY POCKET</p><h2>สร้างกระเป๋าใหม่</h2></div><button class="close-button" type="button" data-close-pocket aria-label="ปิด">×</button></div>
+      <div class="pocket-preview"><span class="pocket-preview-icon" id="pocket-preview-icon">👛</span><div><strong id="pocket-preview-name">กระเป๋าใหม่</strong><small id="pocket-preview-amount">฿0 ต่อรอบ</small></div></div>
+      <div><span class="field-label">เลือกไอคอน</span><div class="icon-grid" id="pocket-icons" role="radiogroup" aria-label="ไอคอนกระเป๋า"></div></div>
+      <label>ชื่อกระเป๋า<input id="pocket-name" maxlength="30" autocomplete="off" placeholder="เช่น เที่ยวญี่ปุ่น" required></label>
+      <label>เงินในกระเป๋าต่อรอบ (บาท)<input id="pocket-amount" inputmode="decimal" autocomplete="off" placeholder="เช่น 2000 หรือ 1500+500"></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close-pocket>ยกเลิก</button><button type="submit" class="primary-button">สร้างกระเป๋า</button></div>
+    </form>
+  </dialog>
   <button class="fab mobile-only" id="add-fab" aria-label="เพิ่มรายการ">＋</button>
 
   <dialog id="more-sheet" class="sheet">
@@ -135,7 +138,7 @@
       <div class="dialog-heading"><h2>เพิ่มเติม</h2><button class="close-button" type="button" id="close-more" aria-label="ปิด">×</button></div>
       <div class="sheet-list">
         <button class="sheet-item" data-view="settings"><span class="round-icon blue">⚙</span><span><strong>ตั้งค่ารอบเงินเดือน</strong><small>รายรับและวันเริ่ม–สิ้นสุดรอบ</small></span></button>
-        <button class="sheet-item" data-view="budget"><span class="round-icon green">♧</span><span><strong>ตั้งค่างบประมาณ</strong><small>งบรายจ่ายแต่ละหมวด</small></span></button>
+        <button class="sheet-item" data-view="budget"><span class="round-icon green">♧</span><span><strong>ตั้งค่างบประมาณ</strong><small>งบหมวดและกระเป๋าที่สร้างเอง</small></span></button>
         <button class="sheet-item" data-view="backup"><span class="round-icon orange">⇧</span><span><strong>นำเข้า / ส่งออกข้อมูล</strong><small>สำรองหรือกู้คืนข้อมูล</small></span></button>
       </div>
     </div>

@@ -16,18 +16,23 @@ const CATEGORIES = {
   ]
 };
 // Bump on each release; shown in the footer
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.0.3';
 const STORAGE_KEY = 'payday-pocket-v1';
-const defaultState = { salary:25000, startDay:25, endDay:24, periodMonth:currentMonth(), transactions:[], budgets:{} };
+const defaultState = { salary:25000, startDay:25, endDay:24, periodMonth:currentMonth(), transactions:[], budgets:{}, customPockets:[] };
+const POCKET_ICONS = ['👛','🐷','💰','✈️','🏖️','🏠','🚗','🎁','💍','🎓','📚','🎮','📱','💻','🐶','🍰','💊','🛟'];
+const POCKET_COLORS = ['#278d70','#5689df','#a879d2','#e8a343','#e47b72','#55a8bb'];
 let state = loadState();
 state.periodMonth = currentPeriodMonth();
 let activeType = 'expense';
 let pocketTouched = false;
-let categoryChart, analyticsChart, dailyChart;
+let pocketIcon = POCKET_ICONS[0];
+let categoryChart, dailyChart;
 let toastTimer;
 
 function currentMonth(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
-function loadState(){ try { const v=JSON.parse(localStorage.getItem(STORAGE_KEY)); return v && Array.isArray(v.transactions) ? {...defaultState,...v} : {...defaultState}; } catch { return {...defaultState}; } }
+// Fresh arrays each time so pushing transactions never mutates defaultState
+function freshState(){ return {...defaultState,transactions:[],budgets:{},customPockets:[]}; }
+function loadState(){ try { const v=JSON.parse(localStorage.getItem(STORAGE_KEY)); return v && Array.isArray(v.transactions) ? {...freshState(),...v} : freshState(); } catch { return freshState(); } }
 function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
 function money(n){ return new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB',maximumFractionDigits:2}).format(Number(n)||0); }
 function shortMoney(n){ return '฿'+new Intl.NumberFormat('th-TH',{maximumFractionDigits:0}).format(Number(n)||0); }
@@ -56,7 +61,9 @@ function activeTransactions(){const b=periodBounds();return state.transactions.f
 function total(items,type){return items.filter(t=>t.type===type).reduce((s,t)=>s+Number(t.amount),0);}
 function category(name,type='expense'){return CATEGORIES[type].find(c=>c.name===name)||{name,icon:'📦',color:'#98a4ad'};}
 // Budget pockets: each budgeted expense category is a pocket; expenses take money out, incomes top it up
-function budgetedPockets(){return CATEGORIES.expense.filter(c=>state.budgets[c.name]!=null).map(c=>c.name);}
+// Custom pockets live in state.customPockets ({name,icon,color}) and keep their amount in state.budgets like categories do
+function budgetedPockets(){return [...CATEGORIES.expense.filter(c=>state.budgets[c.name]!=null).map(c=>c.name),...state.customPockets.map(p=>p.name)];}
+function pocketMeta(name){return state.customPockets.find(p=>p.name===name)||category(name);}
 // Transactions saved before pockets existed have no `pocket`; treat a budgeted expense category as its pocket
 function pocketOf(t){return t.pocket!==undefined?t.pocket:(t.type==='expense'&&state.budgets[t.category]!=null?t.category:'');}
 function pocketStats(name,excludeId=null){
@@ -148,8 +155,6 @@ function renderCharts(items){
  if(categoryChart)categoryChart.destroy();
  categoryChart=new Chart(document.querySelector('#category-chart'),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:5}]},options:chartOptions()});
  document.querySelector('#category-legend').innerHTML=agg.length?agg.map(([name,value])=>`<div class="legend-item"><span class="legend-dot" style="background:${category(name).color}"></span><span>${escapeHTML(name)}</span><strong>${(value/(values.reduce((a,b)=>a+b,0)||1)*100).toFixed(1)}%</strong></div>`).join(''):'<div class="empty-state" style="grid-column:1/-1">เพิ่มรายจ่ายเพื่อดูสัดส่วนหมวดหมู่</div>';
- if(analyticsChart)analyticsChart.destroy();
- analyticsChart=new Chart(document.querySelector('#analytics-category'),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:1,borderColor:'#fff'}]},options:{...chartOptions(),plugins:{legend:{position:'bottom',labels:{boxWidth:10,usePointStyle:true,font:{family:'Noto Sans Thai'}}},tooltip:chartOptions().plugins.tooltip}}});
  if(dailyChart)dailyChart.destroy();
  const b=periodBounds(), start=dateObj(b.start), end=dateObj(b.end), days=[], dayValues=[];
  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){const iso=dateISO(d);days.push(String(d.getDate()));dayValues.push(items.filter(t=>t.type==='expense'&&t.date===iso).reduce((s,t)=>s+Number(t.amount),0));}
@@ -176,7 +181,7 @@ function fillPockets(selected=null){
  const names=budgetedPockets();if(selected&&!names.includes(selected))names.push(selected);
  document.querySelector('#pocket-label-text').textContent=activeType==='income'?'เติมเข้ากระเป๋างบ':'ตัดจากกระเป๋างบ';
  document.querySelector('#pocket-field').hidden=!names.length;
- el.innerHTML=`<option value="">${activeType==='income'?'ไม่เติมเข้ากระเป๋า':'ไม่ใช้กระเป๋างบ'}</option>`+names.map(n=>`<option value="${escapeHTML(n)}">${category(n).icon} ${escapeHTML(n)} · เหลือ ${shortMoney(pocketStats(n,editId).left)}</option>`).join('');
+ el.innerHTML=`<option value="">${activeType==='income'?'ไม่เติมเข้ากระเป๋า':'ไม่ใช้กระเป๋างบ'}</option>`+names.map(n=>`<option value="${escapeHTML(n)}">${pocketMeta(n).icon} ${escapeHTML(n)} · เหลือ ${shortMoney(pocketStats(n,editId).left)}</option>`).join('');
  const cat=document.querySelector('#category-input').value;
  el.value=selected??(activeType==='expense'&&names.includes(cat)?cat:'');
  updatePocketHint();
@@ -193,13 +198,26 @@ function renderPockets(){
  const names=budgetedPockets(), card=document.querySelector('#pockets-card');
  card.hidden=!names.length;if(!names.length)return;
  document.querySelector('#pocket-list').innerHTML=names.map(n=>{
-  const c=category(n), s=pocketStats(n), cap=s.budget+s.added, pct=cap?Math.min(100,s.spent/cap*100):(s.spent?100:0), over=s.left<0;
+  const c=pocketMeta(n), s=pocketStats(n), cap=s.budget+s.added, pct=cap?Math.min(100,s.spent/cap*100):(s.spent?100:0), over=s.left<0;
   return `<div class="pocket-row${over?' over':''}"><span class="tx-icon" style="background:${c.color}20">${c.icon}</span><div class="pocket-info"><div class="pocket-top"><strong>${escapeHTML(n)}</strong><b>${over?'เกิน ':'เหลือ '}${shortMoney(Math.abs(s.left))}</b></div><div class="progress"><span style="width:${pct}%;background:${over?'#c44c43':c.color}"></span></div><small>ใช้ไป ${shortMoney(s.spent)} จาก ${shortMoney(cap)}${s.added?` (เติม ${shortMoney(s.added)})`:''}</small></div></div>`;
  }).join('');
 }
+function openPocketDialog(){
+ document.querySelector('#pocket-form').reset();pocketIcon=POCKET_ICONS[0];renderPocketIcons();updatePocketPreview();
+ document.querySelector('#pocket-dialog').showModal();
+}
+function renderPocketIcons(){document.querySelector('#pocket-icons').innerHTML=POCKET_ICONS.map(i=>`<button type="button" class="icon-choice${i===pocketIcon?' active':''}" role="radio" aria-checked="${i===pocketIcon}" data-icon="${i}">${i}</button>`).join('');}
+function updatePocketPreview(){
+ const amount=calcAmount(document.querySelector('#pocket-amount').value||'0');
+ document.querySelector('#pocket-preview-icon').textContent=pocketIcon;
+ document.querySelector('#pocket-preview-name').textContent=document.querySelector('#pocket-name').value.trim()||'กระเป๋าใหม่';
+ document.querySelector('#pocket-preview-amount').textContent=Number.isNaN(amount)?'สูตรคำนวณไม่ถูกต้อง':`${money(amount)} ต่อรอบ`;
+}
 function renderBudget(){
  const el=document.querySelector('#budget-fields');
- el.innerHTML=CATEGORIES.expense.map(c=>{const has=state.budgets[c.name]!=null, s=has?pocketStats(c.name):null;return `<div class="budget-field"><span class="tx-icon" style="background:${c.color}20">${c.icon}</span><label><span class="budget-name">${c.name}${has?`<small class="${s.left<0?'over':''}">ใช้ไป ${shortMoney(s.spent)} · ${s.left<0?'เกิน':'เหลือ'} ${shortMoney(Math.abs(s.left))}</small>`:''}</span><input type="number" min="0" step="1" inputmode="numeric" data-budget="${escapeHTML(c.name)}" value="${state.budgets[c.name]??''}" placeholder="ไม่จำกัดงบ"></label></div>`;}).join('');
+ const row=(c,custom)=>{const has=state.budgets[c.name]!=null, s=has?pocketStats(c.name):null;return `<div class="budget-field"><span class="tx-icon" style="background:${c.color}20">${c.icon}</span><label><span class="budget-name">${escapeHTML(c.name)}${has?`<small class="${s.left<0?'over':''}">ใช้ไป ${shortMoney(s.spent)} · ${s.left<0?'เกิน':'เหลือ'} ${shortMoney(Math.abs(s.left))}</small>`:''}</span><input type="number" min="0" step="1" inputmode="numeric" data-budget="${escapeHTML(c.name)}"${custom?' data-custom="1"':''} value="${state.budgets[c.name]??''}" placeholder="${custom?'0':'ไม่จำกัดงบ'}"></label>${custom?`<button type="button" class="small-action" data-delete-pocket="${escapeHTML(c.name)}" title="ลบกระเป๋า" aria-label="ลบกระเป๋า ${escapeHTML(c.name)}">×</button>`:''}</div>`;};
+ el.innerHTML=CATEGORIES.expense.map(c=>row(c,false)).join('');
+ document.querySelector('#custom-pocket-fields').innerHTML=state.customPockets.length?state.customPockets.map(p=>row(p,true)).join(''):'<p class="muted pocket-empty">ยังไม่มีกระเป๋าที่สร้างเอง กด “สร้างกระเป๋า” เพื่อแยกเงินไว้เที่ยว ซื้อของขวัญ หรือเป็นเงินฉุกเฉิน</p>';
 }
 function setView(name){
  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`));
@@ -208,7 +226,7 @@ function setView(name){
  const sheet=document.querySelector('#more-sheet');if(sheet.open)sheet.close();
  const titles={dashboard:['PAYDAY POCKET / OVERVIEW','สวัสดี 👋'],transactions:['PAYDAY POCKET / TRANSACTIONS','รายการรับ-จ่าย'],analytics:['PAYDAY POCKET / ANALYTICS','กราฟสรุป'],settings:['PAYDAY POCKET / SETTINGS','ตั้งค่ารอบเงินเดือน'],budget:['PAYDAY POCKET / BUDGET','ตั้งค่างบประมาณ'],backup:['PAYDAY POCKET / DATA','นำเข้า / ส่งออกข้อมูล']};
  document.querySelector('#page-eyebrow').textContent=titles[name][0];document.querySelector('#page-title').textContent=titles[name][1];
- if(name==='analytics')setTimeout(()=>{if(categoryChart)categoryChart.resize();if(analyticsChart)analyticsChart.resize();if(dailyChart)dailyChart.resize();},50);
+ if(name==='analytics')setTimeout(()=>{if(categoryChart)categoryChart.resize();if(dailyChart)dailyChart.resize();},50);
  window.scrollTo({top:0,behavior:'smooth'});
 }
 document.addEventListener('click',e=>{
@@ -252,10 +270,30 @@ document.querySelector('#start-day').addEventListener('change',()=>{state.startD
 document.querySelector('#end-day').addEventListener('change',()=>{state.endDay=Number(document.querySelector('#end-day').value);updatePreview();});
 document.querySelector('#search-transactions').addEventListener('input',()=>renderTransactions('#all-transactions',filteredTransactions(),true));
 document.querySelector('#type-filter').addEventListener('change',()=>renderTransactions('#all-transactions',filteredTransactions(),true));
-document.querySelector('#budget-form').addEventListener('submit',e=>{e.preventDefault();const budgets={};document.querySelectorAll('[data-budget]').forEach(el=>{if(el.value!==''&&Number(el.value)>=0)budgets[el.dataset.budget]=Number(el.value);});state.budgets=budgets;saveState();render();toast('บันทึกงบประมาณแล้ว');});
+document.querySelector('#budget-form').addEventListener('submit',e=>{e.preventDefault();const budgets={};document.querySelectorAll('[data-budget]').forEach(el=>{if(el.value!==''&&Number(el.value)>=0)budgets[el.dataset.budget]=Number(el.value);else if(el.dataset.custom)budgets[el.dataset.budget]=0;});state.budgets=budgets;saveState();render();toast('บันทึกงบประมาณแล้ว');});
+document.querySelector('#pocket-form').addEventListener('submit',e=>{
+ e.preventDefault();const name=document.querySelector('#pocket-name').value.trim(), amount=calcAmount(document.querySelector('#pocket-amount').value||'0');
+ if(!name){toast('กรุณาตั้งชื่อกระเป๋า',true);return;}
+ if(CATEGORIES.expense.some(c=>c.name===name)||state.customPockets.some(p=>p.name===name)){toast('มีกระเป๋าหรือหมวดชื่อนี้อยู่แล้ว',true);return;}
+ if(Number.isNaN(amount)||amount<0){toast('กรุณาตรวจสอบจำนวนเงิน',true);return;}
+ state.customPockets=[...state.customPockets,{name,icon:pocketIcon,color:POCKET_COLORS[state.customPockets.length%POCKET_COLORS.length]}];
+ state.budgets={...state.budgets,[name]:amount};
+ saveState();document.querySelector('#pocket-dialog').close();render();toast(`สร้างกระเป๋า ${name} แล้ว`);
+});
+document.querySelectorAll('[data-open-pocket]').forEach(b=>b.addEventListener('click',openPocketDialog));
+document.querySelectorAll('[data-close-pocket]').forEach(b=>b.addEventListener('click',()=>document.querySelector('#pocket-dialog').close()));
+document.querySelector('#pocket-icons').addEventListener('click',e=>{const b=e.target.closest('[data-icon]');if(!b)return;pocketIcon=b.dataset.icon;renderPocketIcons();updatePocketPreview();});
+['#pocket-name','#pocket-amount'].forEach(id=>document.querySelector(id).addEventListener('input',updatePocketPreview));
+document.querySelector('#custom-pocket-fields').addEventListener('click',e=>{
+ const btn=e.target.closest('[data-delete-pocket]');if(!btn)return;const name=btn.dataset.deletePocket;
+ if(!confirm(`ลบกระเป๋า "${name}"? รายการที่เคยตัดจากกระเป๋านี้จะยังอยู่ แต่จะไม่ผูกกับกระเป๋าแล้ว`))return;
+ state.customPockets=state.customPockets.filter(p=>p.name!==name);const {[name]:_,...rest}=state.budgets;state.budgets=rest;
+ state.transactions.forEach(t=>{if(t.pocket===name)t.pocket='';});
+ saveState();render();toast(`ลบกระเป๋า ${name} แล้ว`);
+});
 document.querySelector('#export-data').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`payday-pocket-${currentMonth()}.json`;a.click();URL.revokeObjectURL(url);toast('ส่งออกข้อมูลแล้ว');});
-document.querySelector('#import-file').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.transactions))throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');state={...defaultState,...data};saveState();initPeriodOptions();render();toast('นำเข้าข้อมูลสำเร็จ');}catch(err){toast('นำเข้าไม่สำเร็จ: ไฟล์ไม่ถูกต้อง',true);}e.target.value='';});
-document.querySelector('#clear-data').addEventListener('click',()=>{if(confirm('แน่ใจหรือไม่ว่าจะลบข้อมูลทั้งหมด? การกระทำนี้ย้อนกลับไม่ได้')){state={...defaultState};state.periodMonth=currentPeriodMonth();saveState();initPeriodOptions();render();toast('ล้างข้อมูลแล้ว');}});
+document.querySelector('#import-file').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.transactions))throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');state={...freshState(),...data};saveState();initPeriodOptions();render();toast('นำเข้าข้อมูลสำเร็จ');}catch(err){toast('นำเข้าไม่สำเร็จ: ไฟล์ไม่ถูกต้อง',true);}e.target.value='';});
+document.querySelector('#clear-data').addEventListener('click',()=>{if(confirm('แน่ใจหรือไม่ว่าจะลบข้อมูลทั้งหมด? การกระทำนี้ย้อนกลับไม่ได้')){state=freshState();state.periodMonth=currentPeriodMonth();saveState();initPeriodOptions();render();toast('ล้างข้อมูลแล้ว');}});
 document.querySelector('#app-version').textContent=APP_VERSION;
 initDaySelects();initPeriodOptions();render();
 
