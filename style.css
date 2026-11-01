@@ -1435,3 +1435,80 @@ dialog::backdrop {
     height: 36px;
   }
 }
+
+/* Budget pockets */
+.pockets-card {
+  margin-bottom: 18px;
+}
+
+.pockets-card[hidden],
+.pocket-field[hidden] {
+  display: none;
+}
+
+.pocket-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px 22px;
+}
+
+.pocket-row {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+}
+
+.pocket-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pocket-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.pocket-top b {
+  color: var(--green-dark);
+  white-space: nowrap;
+}
+
+.pocket-row.over .pocket-top b,
+.budget-name small.over {
+  color: #c44c43;
+}
+
+.pocket-info .progress {
+  margin-bottom: 4px;
+}
+
+.pocket-info small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.budget-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.budget-name small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+@media (max-width: 680px) {
+  .pockets-card {
+    margin-bottom: 14px;
+  }
+
+  .pocket-list {
+    grid-template-columns: 1fr;
+  }
+}

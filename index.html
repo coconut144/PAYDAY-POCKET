@@ -50,6 +50,10 @@
           <article class="card mini-card"><span class="round-icon blue">▦</span><span class="muted">เหลืออีก</span><strong id="days-left">0 วัน</strong><small>ก่อนจบรอบเงินเดือน</small></article>
         </div>
 
+        <article class="card pockets-card" id="pockets-card" hidden>
+          <div class="section-heading"><div><h2>กระเป๋างบประมาณ</h2><p class="muted">เงินที่เหลือในแต่ละกระเป๋ารอบนี้</p></div><button class="text-button" data-view="budget">ปรับงบ →</button></div>
+          <div id="pocket-list" class="pocket-list"></div>
+        </article>
         <div class="content-grid">
           <article class="card chart-card">
             <div class="section-heading"><div><h2>ภาพรวมรายจ่าย</h2><p class="muted">สัดส่วนรายจ่ายตามหมวดหมู่</p></div><button class="text-button" data-view="analytics">ดูกราฟทั้งหมด →</button></div>
@@ -92,7 +96,7 @@
       </section>
 
       <section class="view" id="view-budget">
-        <article class="card settings-card"><div class="section-heading"><div><h2>ตั้งค่างบประมาณ</h2><p class="muted">กำหนดงบรายจ่ายแต่ละหมวดต่อรอบเงินเดือน</p></div></div>
+        <article class="card settings-card"><div class="section-heading"><div><h2>ตั้งค่างบประมาณ</h2><p class="muted">กำหนดงบแต่ละหมวดต่อรอบ แต่ละหมวดที่ตั้งงบจะกลายเป็นกระเป๋าที่เลือกตัดเงินได้ตอนเพิ่มรายการ</p></div></div>
           <form id="budget-form"><div id="budget-fields" class="budget-fields"></div><button class="primary-button" type="submit">บันทึกงบประมาณ</button></form>
         </article>
       </section>
@@ -119,6 +123,7 @@
         <small id="amount-result" class="amount-result" aria-live="polite"></small>
       </div>
       <div class="form-grid two-col"><label>วันที่<input type="date" id="date-input" required></label><label>หมวดหมู่<select id="category-input" required></select></label></div>
+      <div class="pocket-field" id="pocket-field"><label><span id="pocket-label-text">ตัดจากกระเป๋างบ</span><select id="pocket-input"></select></label><small id="pocket-hint" class="amount-result" aria-live="polite"></small></div>
       <label>รายละเอียด (ไม่บังคับ)<input id="note-input" maxlength="120" placeholder="เช่น ข้าวกลางวัน"></label>
       <div class="dialog-actions"><button type="button" class="secondary-button" id="cancel-dialog">ยกเลิก</button><button type="submit" class="primary-button">บันทึกรายการ</button></div>
     </form>
